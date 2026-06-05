@@ -1,92 +1,305 @@
-# Zomato Bangalore — Restaurant Analytics
+# Zomato Bangalore Restaurant Analytics
 
-Exploratory data analysis of Bangalore's restaurant ecosystem using the Zomato Kaggle dataset. The project investigates pricing patterns, rating drivers, cuisine preferences, location performance, and identifies underserved market zones across the city.
-
----
-
-## Dataset
-
-| Property | Value |
-|---|---|
-| Source | [Zomato Bangalore Dataset — Kaggle](https://www.kaggle.com/datasets/himanshupoddar/zomato-bangalore-restaurants) |
-| Raw rows | 51,717 |
-| Clean rows | 49,011 |
-| Columns used | 15 |
-| Coverage | Bangalore restaurants listed on Zomato |
+Exploratory Data Analysis of Bangalore's restaurant ecosystem using the Zomato Kaggle dataset. This project investigates pricing patterns, customer engagement, cuisine preferences, restaurant performance, and identifies underserved market opportunities across Bangalore.
 
 ---
 
-## Project Structure
+## Project Overview
 
-```
+The objective of this project is to understand what drives restaurant success on Zomato and identify potential market gaps across Bangalore's restaurant landscape.
+
+Using over 50,000 restaurant records, the analysis explores:
+
+* Rating behaviour and customer preferences
+* Restaurant pricing patterns
+* Cuisine performance across locations
+* Customer engagement trends
+* Supply-demand imbalances
+* Business expansion opportunities
+
+---
+
+## Dataset Information
+
+| Property      | Value                                  |
+| ------------- | -------------------------------------- |
+| Source        | Zomato Bangalore Dataset (Kaggle)      |
+| Raw Records   | 51,717                                 |
+| Clean Records | 49,011                                 |
+| Features Used | 15                                     |
+| Coverage      | Bangalore restaurants listed on Zomato |
+
+---
+
+## Repository Structure
+
+```text
 zomato-analytics/
-├── zomato.csv                  # raw dataset (not tracked by git)
-├── zomato_analytics.ipynb      # full analysis notebook
+├── zomato.ipynb
+├── zomato_analytics.ipynb
+├── images/
+│   ├── rating_distribution.png
+│   ├── cost_distribution.png
+│   ├── top_rated_cuisines.png
+│   └── highest_voted_price_range.png
 ├── README.md
 └── .gitignore
 ```
 
 ---
 
-## What's Covered
+## Skills Demonstrated
 
-### Data Cleaning
-- Removed 2,474 rows with corrupted URLs (review text shifted into URL column due to unescaped commas in the CSV)
-- Converted `rate` from string `'4.1/5'` to float `4.1`
-- Cleaned `approx_cost` — stripped commas from values like `'1,200'`
-- Replaced empty `[]` in `reviews_list` with proper `NaN`
-- Dropped `dish_liked` (54% missing) and `menu_item` (75% missing)
-- Dropped 232 rows with nulls in `location`, `rest_type`, `cuisines`
+* Python
+* Pandas
+* NumPy
+* Data Cleaning
+* Exploratory Data Analysis
+* Statistical Analysis
+* Data Visualization
+* Business Analytics
+* Market Opportunity Analysis
+* Customer Behaviour Analysis
+* Insight Generation
 
-### Analysis (23 questions across 3 layers)
+---
 
-**Univariate** — distribution of ratings, costs, restaurant types, categories
+## Data Cleaning & Preparation
 
-**Bivariate** — online ordering vs rating, table booking vs rating, price range vs votes, location vs count/rating/cost, rest type vs rating/votes
+Several data quality issues were identified and resolved before analysis.
 
-**Multivariate** — cuisine quality by location, cuisine identity per restaurant type, category distribution by neighbourhood, price range performance by area, supply-demand gap analysis
+### Data Quality Fixes
+
+* Removed 2,474 corrupted rows where review text shifted into URL fields because of CSV formatting issues.
+* Converted ratings from string format (`4.1/5`) into numerical values.
+* Cleaned `approx_cost` by removing commas from values such as `1,200`.
+* Replaced empty review lists (`[]`) with proper missing values.
+* Removed highly incomplete columns:
+
+  * `dish_liked` (54% missing)
+  * `menu_item` (75% missing)
+* Removed rows containing missing values in:
+
+  * location
+  * restaurant type
+  * cuisines
+
+---
+
+## Visual Analysis
+
+### Rating Distribution
+
+Most restaurants are concentrated between ratings of 3.5 and 4.0, with an overall average rating of approximately 3.71.
+
+![Rating Distribution](images/rating_distribution.png)
+
+---
+
+### Cost Distribution
+
+The Bangalore restaurant market is heavily concentrated in the affordable segment, with a median cost-for-two of approximately ₹400.
+
+![Cost Distribution](images/cost_distribution.png)
+
+---
+
+### Top Rated Cuisines Across High-Performing Locations
+
+Premium neighbourhoods consistently favour niche and international cuisines over mainstream categories.
+
+![Top Rated Cuisines](images/top_rated_cuisines.png)
+
+---
+
+### Highest-Voted Price Range by Location
+
+Premium and luxury restaurants dominate customer engagement across Bangalore's highest-performing restaurant districts.
+
+![Highest Voted Price Range](images/highest_voted_price_range.png)
+
+---
+
+## Analysis Framework
+
+The project addresses 23 business questions across three analytical layers.
+
+### Univariate Analysis
+
+* Rating distribution
+* Cost distribution
+* Restaurant type distribution
+* Category distribution
+
+### Bivariate Analysis
+
+* Online ordering vs ratings
+* Table booking vs ratings
+* Cost vs customer engagement
+* Location performance
+* Restaurant type performance
+
+### Multivariate Analysis
+
+* Cuisine quality by location
+* Cuisine identity by restaurant type
+* Category distribution by neighbourhood
+* Price-range performance by area
+* Supply-demand gap analysis
 
 ---
 
 ## Key Findings
 
-**1. Specialisation beats volume**
-Niche international cuisines — Japanese, Korean, Mediterranean, Parsi — consistently outrate the most common cuisines (North Indian, Chinese, South Indian) across every premium location. Lavelle Road's top-rated cuisine: Juices at 4.60. St. Marks Road's top cluster: Southeast Asian at 4.54.
+### 1. Specialisation Beats Volume
 
-**2. Dine-in drives 20× more engagement than delivery**
-Casual Dining generates 2.6M total votes for North Indian alone. The same cuisine via Delivery generates 126k. People vote significantly more when they've had a sit-down experience.
+Niche international cuisines consistently outperform mainstream categories.
 
-**3. Restaurant types have distinct cuisine identities**
-Cafes are overwhelmingly Western (Burger, Continental, Italian, American). Casual Dining is Indian (North Indian, Mughlai, Biryani). These aren't overlapping — they're separate food cultures operating under the same platform.
+Top-rated cuisines include:
 
-**4. Higher spend = higher engagement**
-Budget restaurants are absent from every top-voted location. Luxury (₹2,000+) averages 5,277 votes in St. Marks Road. The assumption that affordable restaurants are more popular is not supported by this data.
+* Japanese
+* Korean
+* Mediterranean
+* Parsi
+* Singaporean
+* Indonesian
 
-**5. East Bangalore is a dessert zone**
-When Delivery and Dine-out are excluded, East Bangalore (IT corridor — Whitefield, Marathahalli, Bellandur) uniquely shows Desserts as its dominant category. Consistent with the young tech-worker demographic and snacking culture in that area.
-
-**6. Four areas are critically underserved**
-
-| Location | Restaurants | Avg Votes | Demand/Supply Ratio |
-|---|---|---|---|
-| Rajarajeshwari Nagar | 2 | 366 | **183** |
-| Central Bangalore | 3 | 383 | **128** |
-| West Bangalore | 5 | 222 | 44 |
-| North Bangalore | 7 | 229 | 33 |
-
-Three cuisine categories are missing from **all four** underserved areas: South Indian, Cafe, and Desserts. These represent the clearest entry points for new restaurant operators.
+These cuisines achieve higher ratings than dominant categories such as North Indian, Chinese, and South Indian.
 
 ---
 
-## Setup
+### 2. Dine-In Generates Significantly More Engagement
+
+Customer engagement is strongly linked to sit-down dining experiences.
+
+Example:
+
+* Casual Dining (North Indian): ~2.6 million votes
+* Delivery (North Indian): ~126 thousand votes
+
+Customers are substantially more likely to review dine-in experiences than delivery orders.
+
+---
+
+### 3. Restaurant Types Have Distinct Cuisine Identities
+
+Different restaurant formats serve different culinary markets.
+
+**Cafes**
+
+* Italian
+* American
+* Continental
+* Burgers
+
+**Casual Dining**
+
+* North Indian
+* Mughlai
+* Biryani
+
+Cuisine preference is strongly influenced by restaurant format.
+
+---
+
+### 4. Premium Spending Correlates with Higher Engagement
+
+Higher-priced restaurants consistently attract greater customer interaction.
+
+For example:
+
+* Luxury restaurants on St. Marks Road average more than 5,000 votes.
+
+The assumption that budget restaurants generate the highest engagement is not supported by the data.
+
+---
+
+### 5. East Bangalore Functions as a Dessert Hub
+
+After excluding Delivery and Dine-Out categories, East Bangalore locations such as:
+
+* Whitefield
+* Bellandur
+* Marathahalli
+
+show Desserts as the dominant category.
+
+This aligns with the area's young technology-focused demographic.
+
+---
+
+### 6. Four Areas Are Critically Underserved
+
+| Location             | Restaurants | Avg Votes | Demand/Supply Ratio |
+| -------------------- | ----------- | --------- | ------------------- |
+| Rajarajeshwari Nagar | 2           | 366       | 183                 |
+| Central Bangalore    | 3           | 383       | 128                 |
+| West Bangalore       | 5           | 222       | 44                  |
+| North Bangalore      | 7           | 229       | 33                  |
+
+Three cuisine categories are absent from all four underserved zones:
+
+* South Indian
+* Cafe
+* Desserts
+
+These represent the strongest market-entry opportunities identified in the analysis.
+
+---
+
+## Business Recommendations
+
+### Expansion Opportunities
+
+* Expand South Indian offerings in underserved zones.
+* Introduce cafe concepts in low-supply regions.
+* Develop dessert-focused outlets in emerging residential areas.
+
+### Customer Engagement Strategy
+
+* Invest in dine-in experiences for high-engagement cuisine categories.
+* Increase visibility for highly rated niche cuisines.
+* Focus premium dining concepts on high-demand neighbourhoods.
+
+### Market Positioning
+
+* Premium dining demonstrates the strongest customer engagement.
+* Niche cuisine concepts achieve higher customer satisfaction.
+* Underserved locations provide lower competition and higher growth potential.
+
+---
+
+## Future Enhancements
+
+Potential extensions of this project include:
+
+* Interactive Power BI dashboard
+* Restaurant rating prediction model
+* Customer sentiment analysis
+* Restaurant recommendation engine
+* Restaurant success classification model
+
+---
+
+## Installation
 
 ```bash
 git clone https://github.com/yashvardhandebas/zomato-analytics.git
+
 cd zomato-analytics
+
 pip install pandas numpy matplotlib seaborn jupyter
 ```
 
-Download `zomato.csv` from [Kaggle](https://www.kaggle.com/datasets/himanshupoddar/zomato-bangalore-restaurants) and place it in the project root.
+Download the Zomato Bangalore dataset from Kaggle and place:
+
+```text
+zomato.csv
+```
+
+in the project root directory.
+
+Run:
 
 ```bash
 jupyter notebook zomato_analytics.ipynb
@@ -96,17 +309,16 @@ jupyter notebook zomato_analytics.ipynb
 
 ## Dependencies
 
-```
-pandas >= 1.5
-numpy >= 1.23
-matplotlib >= 3.6
-seaborn >= 0.12
-jupyter
-```
+* pandas >= 1.5
+* numpy >= 1.23
+* matplotlib >= 3.6
+* seaborn >= 0.12
+* jupyter
 
 ---
 
 ## Author
 
-**Yashvardhan Debas**
-[github.com/yashvardhandebas](https://github.com/yashvardhandebas)
+Yashvardhan Debas
+
+GitHub: https://github.com/yashvardhandebas
