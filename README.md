@@ -1,20 +1,21 @@
 # Zomato Bangalore — Restaurant Analytics
 
-Exploratory data analysis of Bangalore's restaurant ecosystem using the Zomato Kaggle dataset. The project investigates what actually drives restaurant success on Zomato — and where the market gaps are.
+Exploratory data analysis and restaurant success prediction using the Zomato Bangalore Kaggle dataset. The project investigates what drives restaurant popularity on Zomato — and builds a machine learning model to predict it.
 
-> **49,011 restaurants · 23 business questions · 3 statistical tests · 6 actionable findings**
+> **49,011 restaurants · 23 EDA questions · 3 statistical tests · 3 ML models · ROC-AUC 0.89**
 
 ---
 
 ## Project Overview
 
-Most Zomato EDA projects stop at bar charts. This one goes further — every major claim is statistically validated, confounding variables are called out explicitly, and findings are framed as business recommendations rather than observations.
+Most Zomato EDA projects stop at bar charts. This one goes further — every major claim is statistically validated, a binary classification model predicts restaurant success with 80% accuracy, and findings are framed as business recommendations rather than observations.
 
 The analysis covers:
-- What drives ratings — and what doesn't (online ordering turns out not to matter)
+- What drives ratings — and what doesn't (online ordering turns out not to matter for satisfaction)
 - Cuisine performance across Bangalore's neighbourhoods
 - Which price ranges actually generate customer engagement
 - Where demand far exceeds supply — the real market opportunity
+- Predicting whether a restaurant will achieve above-median engagement before it accumulates a vote history
 
 ---
 
@@ -34,7 +35,7 @@ The analysis covers:
 
 ```text
 zomato-analytics/
-├── zomato_analytics.ipynb       # full analysis notebook
+├── zomato_analytics_final.ipynb  # full analysis + ML model
 ├── images/
 │   ├── rating_distribution.png
 │   ├── cost_distribution.png
@@ -48,7 +49,7 @@ zomato-analytics/
 
 ## Skills Demonstrated
 
-`Python` `Pandas` `NumPy` `Seaborn` `Matplotlib` `Statistical Testing` `EDA` `Data Cleaning` `Business Analytics` `Market Analysis` `Insight Generation`
+`Python` `Pandas` `NumPy` `Seaborn` `Matplotlib` `Scikit-learn` `XGBoost` `Statistical Testing` `Binary Classification` `Feature Engineering` `EDA` `Data Cleaning` `Business Analytics` `Market Analysis`
 
 ---
 
@@ -86,7 +87,7 @@ Bangalore's restaurant market is concentrated in the affordable segment. Median 
 
 ### Top Rated Cuisines Across High-Performing Locations
 
-Premium neighbourhoods consistently favour niche international cuisines over mainstream categories — Japanese, Korean, and Mediterranean outrate North Indian and Chinese everywhere.
+Premium neighbourhoods consistently favour niche international cuisines — Japanese, Korean, and Mediterranean outrate North Indian and Chinese everywhere.
 
 ![Top Rated Cuisines](images/top_rated_cuisines.png)
 
@@ -102,7 +103,7 @@ Premium and luxury restaurants dominate customer engagement. Budget restaurants 
 
 ## Analysis Framework
 
-23 questions answered across three layers — univariate first, then bivariate, then multivariate. Order matters: you cannot ask a smart two-variable question until you understand each column individually.
+23 questions answered across three layers — univariate first, then bivariate, then multivariate.
 
 ### Layer 1 — Univariate
 Rating distribution · Cost distribution · Restaurant type breakdown · Category breakdown
@@ -132,36 +133,80 @@ Difference:  0.049 rating points
 
 ### Test 2 — Table Booking vs Rating (Mann-Whitney U)
 ```
-Book Yes:  mean 4.136  (n = 6,345  — 13% of restaurants)
-Book No:   mean 3.642  (n = 42,666)
-p-value:   < 0.0001
+Book Yes:   mean 4.136  (n = 6,345 — 13% of restaurants)
+Book No:    mean 3.642  (n = 42,666)
+p-value:    < 0.0001
 Difference: 0.494 rating points
 ```
-**Verdict:** Statistically significant and practically meaningful. Nearly half a rating point difference. However — table booking is a proxy for restaurant quality tier, not a direct cause. Restaurants offering table booking self-select into a higher operating standard. Correlation, not causation.
+**Verdict:** Statistically significant and practically meaningful. Nearly half a rating point difference. Table booking is a proxy for restaurant quality tier — restaurants offering reservations self-select into a higher operating standard. Correlation, not causation.
 
 ---
 
 ### Test 3 — Cost vs Rating (Spearman Correlation)
 ```
-Spearman r:  0.358
-p-value:     < 0.0001
+Spearman r:         0.358
+p-value:            < 0.0001
 Variance explained: ~13%
 ```
-**Verdict:** Moderate-strong positive correlation. Higher cost associates with better ratings but explains only 13% of rating variance. The remaining 87% comes from cuisine quality, service, management, and location — factors not captured by price alone.
+**Verdict:** Moderate-strong positive correlation. Higher cost associates with better ratings but explains only 13% of rating variance. Service, cuisine quality, and management drive the remaining 87%.
 
 ---
 
-## Key Findings
+## Machine Learning — Restaurant Success Prediction
+
+**Business question:** Can we predict whether a restaurant will achieve above-median customer engagement given only its structural features — before it accumulates a vote history?
+
+### Target Variable
+```
+success = 1  if votes > median votes  (popular)
+success = 0  if votes ≤ median votes  (not popular)
+Class balance: 50.06% / 49.93% — perfectly balanced
+```
+
+### Feature Engineering
+- `online_order`, `book_table` → binary encoded (Yes=1, No=0)
+- `approx_cost` → used as-is (float)
+- `location` → target encoded as mean success rate per area (avoids one-hot explosion across 80+ locations)
+- `cuisines` → top 10 cuisines extracted as binary flag columns
+- `rest_type`, `listed_in(type)` → one-hot encoded
+
+### Model Results
+
+| Model | Accuracy | F1 | ROC-AUC | CV F1 (5-fold) |
+|---|---|---|---|---|
+| Logistic Regression | 75.35% | 0.7531 | 0.8420 | 0.7400 ± 0.004 |
+| Random Forest | 76.07% | 0.7593 | 0.8536 | 0.7391 ± 0.004 |
+| **XGBoost** | **80.22%** | **0.8021** | **0.8903** | **0.7937 ± 0.003** |
+
+**XGBoost selected as production model.** ROC-AUC of 0.89 means the model correctly ranks a popular restaurant above an unpopular one 89% of the time. Low CV standard deviation confirms stability — the model is not overfitting to one test split.
+
+### Why XGBoost Wins on the Metric That Matters
+
+False negatives — popular restaurants the model fails to identify — are the costly error for this business use case. XGBoost misses 1,102 popular restaurants vs Random Forest's 1,537. That's 435 fewer missed opportunities, which is why XGBoost wins beyond headline accuracy.
+
+### Top 5 Feature Importances (Random Forest)
+
+| Feature | Importance | Interpretation |
+|---|---|---|
+| approx_cost | 0.26 | Price tier is the single strongest signal of engagement |
+| book_table | 0.16 | Reservation capability signals quality tier |
+| online_order | 0.13 | Drives discoverability without improving satisfaction |
+| location | 0.11 | Neighbourhood success rate matters significantly |
+| rest_type_Casual Dining | 0.09 | Format identity is a real predictor, not noise |
+
+### The online_order Contradiction — Resolved
+
+The Mann-Whitney test shows online ordering has negligible effect on **ratings** (Δ = 0.049). The model shows it has substantial importance for predicting **votes** (importance = 0.13). These are not contradictory — they measure different things. Online ordering gets restaurants discovered and voted on. It does not make the food or experience better. Two separate mechanisms, both confirmed by data.
+
+---
+
+## Key EDA Findings
 
 ### 1. Specialisation beats volume
-Niche international cuisines — Japanese, Korean, Mediterranean, Parsi, Singaporean — consistently outrate the most common cuisines regardless of location. Lavelle Road's top-rated cuisine is Juices at 4.60. St. Marks Road's top cluster is Southeast Asian at 4.54. The cuisines ordered most are not the ones rated highest.
-
----
+Niche international cuisines — Japanese, Korean, Mediterranean, Parsi — consistently outrate the most common cuisines regardless of location. The cuisines ordered most are not the ones rated highest.
 
 ### 2. Dine-in generates 20× more engagement than delivery
-Casual Dining (North Indian): ~2.6 million total votes. Delivery (North Indian): ~126 thousand votes. Customers are far more likely to engage and review when they've had a sit-down experience. Delivery volume does not translate to community engagement.
-
----
+Casual Dining (North Indian): ~2.6M total votes. Delivery (North Indian): ~126k votes. Customers are far more likely to engage and review sit-down experiences than delivery orders.
 
 ### 3. Restaurant types have distinct cuisine identities
 
@@ -172,19 +217,11 @@ Casual Dining (North Indian): ~2.6 million total votes. Delivery (North Indian):
 | Quick Bites | North Indian · Fast Food · Chinese |
 | Delivery | North Indian · Biryani · Chinese |
 
-These are not overlapping markets — they are distinct food cultures operating on the same platform.
-
----
-
 ### 4. Premium spending drives engagement — budget does not
-Luxury restaurants (₹2,000+) on St. Marks Road average 5,277 votes. Not a single location's highest-voted restaurant category is Budget or Affordable. The assumption that cheap restaurants are more popular is not supported by this data.
-
----
+Luxury restaurants (₹2,000+) on St. Marks Road average 5,277 votes. Budget restaurants do not appear in any location's top-voted category.
 
 ### 5. East Bangalore is a dessert zone
-Excluding Delivery and Dine-Out, East Bangalore (Whitefield, Bellandur, Marathahalli) is the only zone where Desserts dominates over standard dining. Consistent with the IT corridor's young tech-worker demographic and higher disposable income snacking culture.
-
----
+Excluding Delivery and Dine-Out, East Bangalore (Whitefield, Bellandur, Marathahalli) is the only zone where Desserts dominates. Consistent with the IT corridor's young tech-worker demographic.
 
 ### 6. Four areas are critically underserved
 
@@ -195,7 +232,7 @@ Excluding Delivery and Dine-Out, East Bangalore (Whitefield, Bellandur, Marathah
 | West Bangalore | 5 | 222 | 44 |
 | North Bangalore | 7 | 229 | 33 |
 
-Three cuisine categories are absent from **all four** underserved zones simultaneously: **South Indian · Cafe · Desserts**. These are the clearest market entry points identified in the analysis.
+Three cuisine categories absent from all four underserved zones: **South Indian · Cafe · Desserts**
 
 ---
 
@@ -203,22 +240,28 @@ Three cuisine categories are absent from **all four** underserved zones simultan
 
 **For restaurant operators:**
 - Rajarajeshwari Nagar has a demand/supply ratio of 183 with only 2 restaurants. A South Indian or Cafe concept here faces near-zero competition with demonstrated existing demand.
-- Niche cuisine positioning (Japanese, Korean, Mediterranean) consistently outperforms broad menus — specialise rather than generalise.
+- Price positioning in the Premium (₹1k-2k) bracket maximises engagement. The model confirms approx_cost as the strongest predictor (importance = 0.26).
+- Enabling both online ordering and table booking together maximises discoverability — the model ranks both in the top 3 features.
 
 **For Zomato:**
-- Online ordering adoption campaigns will not improve customer satisfaction scores — the 0.049 rating point difference is statistically real but operationally irrelevant.
-- Table booking restaurants (13% of listings) generate disproportionately high ratings and engagement — acquisition strategy should prioritise quality-tier restaurants over volume.
-- The four underserved zones represent genuine platform growth opportunities where restaurant recruitment would meet existing unmet demand.
+- Online ordering campaigns will not improve customer satisfaction scores — the Mann-Whitney test confirms the practical difference is negligible (Δ = 0.049).
+- Table booking restaurants (13% of listings) generate disproportionately high ratings and engagement — quality-tier acquisition outperforms volume-based acquisition.
+- The four underserved zones represent genuine growth opportunities where restaurant recruitment meets existing unmet demand.
+
+**Model limitation:**
+Votes are partly a function of listing age — a restaurant listed in 2015 accumulates votes passively over time. This analysis does not control for listing age. A normalised votes-per-month metric would improve target variable quality in future iterations.
 
 ---
 
 ## Future Enhancements
 
-- [ ] Restaurant rating prediction model (Random Forest)
+- [x] EDA — 23 business questions answered
+- [x] Statistical validation — 3 claims tested with Mann-Whitney U and Spearman
+- [x] ML model — XGBoost binary classifier, ROC-AUC 0.89
 - [ ] Interactive Power BI dashboard with location drill-down
+- [ ] Votes normalisation by listing age for improved demand proxy
 - [ ] Customer sentiment analysis on reviews_list
-- [ ] Restaurant success classification (above/below median votes)
-- [ ] Votes normalisation by listing age to improve demand proxy accuracy
+- [ ] Restaurant recommendation engine
 
 ---
 
@@ -227,13 +270,13 @@ Three cuisine categories are absent from **all four** underserved zones simultan
 ```bash
 git clone https://github.com/yashvardhandebas/zomato-analytics.git
 cd zomato-analytics
-pip install pandas numpy matplotlib seaborn scipy jupyter
+pip install pandas numpy matplotlib seaborn scipy scikit-learn xgboost jupyter
 ```
 
 Download `zomato.csv` from [Kaggle](https://www.kaggle.com/datasets/himanshupoddar/zomato-bangalore-restaurants) and place in the project root, then:
 
 ```bash
-jupyter notebook zomato_analytics.ipynb
+jupyter notebook zomato_analytics_final.ipynb
 ```
 
 ---
@@ -246,6 +289,8 @@ numpy >= 1.23
 matplotlib >= 3.6
 seaborn >= 0.12
 scipy >= 1.9
+scikit-learn >= 1.1
+xgboost >= 1.7
 jupyter
 ```
 
